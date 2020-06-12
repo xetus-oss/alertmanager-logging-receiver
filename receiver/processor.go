@@ -15,18 +15,14 @@ type Processor interface {
 	Process(request io.Reader) error
 }
 
-// LoggingProcessor is a webhook request processor that logs received webhook alerts
-type LoggingProcessor struct{}
-
-// NewLoggingProcessor returns a new LoggingProcessor instance.
-func NewLoggingProcessor() *LoggingProcessor {
-	return &LoggingProcessor{}
-}
+// loggingProcessor is a simple Processor implementation that logs received
+// webhook request content
+type loggingProcessor struct{}
 
 // Process the supplied request, in this case by logging
 // at info level if an alert was received and at error level
 // if the received request was invalid.
-func (p *LoggingProcessor) Process(request io.Reader) error {
+func (p *loggingProcessor) Process(request io.Reader) error {
 	// Godoc: https://godoc.org/github.com/prometheus/alertmanager/template#Data
 	data := template.Data{}
 	err := json.NewDecoder(request).Decode(&data)
@@ -48,4 +44,9 @@ func (p *LoggingProcessor) Process(request io.Reader) error {
 		"request": data,
 	}).Info("Received webhook request")
 	return nil
+}
+
+// NewLoggingProcessor returns a new loggingProcessor instance.
+func NewLoggingProcessor() Processor {
+	return &loggingProcessor{}
 }

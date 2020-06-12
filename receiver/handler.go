@@ -13,54 +13,46 @@ type response struct {
 	Message string
 }
 
-// HandlerService provides all of the
-type HandlerService struct {
-	processor Processor
-	handler   *http.ServeMux
-}
-
-// NewHandlerService creates a new ServeMux instance configured with the handler endpoints
-func NewHandlerService(p Processor) *HandlerService {
-	service := &HandlerService{processor: p}
+// GenerateMux generates an *http.ServeMux multiplexer pre-configured
+// with receiver routes
+func GenerateMux(p Processor) *http.ServeMux {
 	handler := http.NewServeMux()
-	handler.HandleFunc("/healthz", service.handleHealthz)
-	handler.HandleFunc("/webhook", service.handleWebhook)
-	service.handler = handler
-	return service
+	handler.HandleFunc("/healthz", buildHealthzHandler())
+	handler.HandleFunc("/webhook", buildWebhookHandler(p))
+	return handler
 }
 
-// Handler returns the http.ServeMux instance configured for the handler
-func (svc *HandlerService) Handler() *http.ServeMux {
-	return svc.handler
-}
-
-func (svc *HandlerService) handleWebhook(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	status := http.StatusOK
-	resp := &response{
-		Status:  status,
-		Message: "success",
-	}
-	if err := svc.processor.Process(r.Body); err != nil {
-		status = http.StatusBadRequest
-		resp = &response{
+func buildWebhookHandler(processor Processor) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		status := http.StatusOK
+		resp := &response{
 			Status:  status,
-			Message: err.Error(),
+			Message: "success",
 		}
+		if err := processor.Process(r.Body); err != nil {
+			status = http.StatusBadRequest
+			resp = &response{
+				Status:  status,
+				Message: err.Error(),
+			}
+		}
+		jsonBytes, jsonErr := json.Marshal(resp)
+		if jsonErr != nil {
+			log.WithFields(log.Fields{
+				"error":    jsonErr,
+				"response": resp,
+			}).Error("Failed to marshal response to JSON")
+			jsonBytes = []byte("{ \"Status\": 200 }")
+		}
+		w.WriteHeader(status)
+		fmt.Fprint(w, string(jsonBytes[:]))
 	}
-	jsonBytes, jsonErr := json.Marshal(resp)
-	if jsonErr != nil {
-		log.WithFields(log.Fields{
-			"error":    jsonErr,
-			"response": resp,
-		}).Error("Failed to marshal response to JSON")
-		jsonBytes = []byte("{ \"Status\": 200 }")
-	}
-	w.WriteHeader(status)
-	fmt.Fprint(w, string(jsonBytes[:]))
 }
 
-func (svc *HandlerService) handleHealthz(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, "Ok!")
+func buildHealthzHandler() func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "Ok!")
+	}
 }

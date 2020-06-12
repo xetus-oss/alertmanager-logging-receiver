@@ -23,7 +23,7 @@ func main() {
 	server := &http.Server{
 		ReadTimeout:  2 * time.Second,
 		WriteTimeout: 2 * time.Second,
-		Handler:      NewHandlerService(NewLoggingProcessor()).Handler(),
+		Handler:      GenerateMux(NewLoggingProcessor()),
 		Addr:         listenAddress,
 	}
 	log.Fatal(server.ListenAndServe())

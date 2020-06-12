@@ -36,15 +36,15 @@ func TestHandlerServiceRegistersExpectedHandlersAtExpectedPaths(t *testing.T) {
 		wantText      string
 		wantProcessed bool
 	}{
-		"webhook processor error": {
+		"webhook processor error should return error": {
 			path: "/webhook", method: "POST", processor: &mockProcessor{err: "mock error"},
 			wantStatus: 400, wantProcessed: true, wantText: "{\"Status\":400,\"Message\":\"mock error\"}",
 		},
-		"webhook processor success": {
+		"webhook processor success should return ok": {
 			path: "/webhook", method: "POST", processor: &mockProcessor{},
 			wantStatus: 200, wantProcessed: true, wantText: "{\"Status\":200,\"Message\":\"success\"}",
 		},
-		"healthz endpoint": {
+		"healthz endpoint should return ok": {
 			path: "/healthz", method: "GET", processor: &mockProcessor{},
 			wantStatus: 200, wantProcessed: false, wantText: "Ok!",
 		},
@@ -52,18 +52,18 @@ func TestHandlerServiceRegistersExpectedHandlersAtExpectedPaths(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			handlerSvc := NewHandlerService(tc.processor)
+			mux := GenerateMux(tc.processor)
 			request := httptest.NewRequest(tc.method, tc.path, nil)
 			w := httptest.NewRecorder()
-			handlerSvc.handler.ServeHTTP(w, request)
+			mux.ServeHTTP(w, request)
 			response := w.Result()
+
 			assert.Equal(t, tc.wantStatus, response.StatusCode)
 			assert.Equal(t, tc.wantProcessed, tc.processor.processed)
-			if tc.wantText != "" {
-				defer response.Body.Close()
-				gotBytes, _ := ioutil.ReadAll(response.Body)
-				assert.Equal(t, tc.wantText, string(gotBytes))
-			}
+
+			defer response.Body.Close()
+			gotBytes, _ := ioutil.ReadAll(response.Body)
+			assert.Equal(t, tc.wantText, string(gotBytes))
 		})
 	}
 }
