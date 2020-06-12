@@ -40,20 +40,11 @@ The release process is:
     make test
     ```
 
-3. Create a tag with the desired version
+3. Create a tag with the desired version, push the docker images, and push the git tag
 
     ```sh
     git tag v${version}
-    ```
-
-4. Push the docker image, making sure to add the new tag and update the `latest` tag
-
-    ```sh
     VERSION=${version} make push
     VERSION="latest" make push
+    git push origin v${version}
     ```
-
-5. Push the git state
-
-    ```sh
-    git push origin master
