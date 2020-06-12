@@ -1,0 +1,4 @@
+language: go
+go: 1.14.x
+arch: amd64
+script: make test

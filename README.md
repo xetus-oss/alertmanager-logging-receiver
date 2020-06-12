@@ -1,3 +1,5 @@
+[![Travis CI Build Status](https://travis-ci.org/xetus-oss/alertmanager-logging-receiver.svg?branch=master)](https://travis-ci.org/github/xetus-oss/alertmanager-logging-receiver)
+
 # Alertmanager Logging Receiver
 
 A tiny [webhook receiver](https://prometheus.io/docs/alerting/configuration/#webhook_config) for [Prometheus AlertManager](https://prometheus.io/docs/alerting/overview/) alerts that logs the received alert data in JSON format to stdout.
