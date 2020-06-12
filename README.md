@@ -10,8 +10,6 @@ This app makes it possible -- when coupled with a log aggregator like fluentd, f
 
 # Using This Image
 
-Build the app, the docker image, and run a docker container locally from the app:
-
 ```sh
 docker run --name am-logging-receiver -p 8080:8080 xetusoss/alertmanager-logging-receiver:latest
 ```
